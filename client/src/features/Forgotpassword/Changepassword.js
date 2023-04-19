@@ -10,63 +10,51 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import {useDispatch, useSelector} from 'react-redux';
 import {ActivityIndicator, MD2Colors} from 'react-native-paper';
-import {loginuser, resendverifyotp} from './loginSlice';
+import {reset_password} from './forgotpwdSlice';
 
 //Validation
 import {Formik} from 'formik';
 import * as yup from 'yup';
 
-function Login({navigation}) {
-  const loading = useSelector(state => state.login.loading);
-
+function ChangePassword({navigation}) {
   const [isshowpass, setisshowpass] = useState(false);
+  const [isshowpass_2, setisshowpass_2] = useState(false);
 
-  const [email, setEmail] = useState('');
+  const token = useSelector(state => state.forgotpwd.token);
 
-  const error = useSelector(state => state.login.error);
-  const resend_error = useSelector(state => state.login.resend_error);
-  const resend_token = useSelector(state => state.login.resend_token);
+  const reset_error = useSelector(state => state.forgotpwd.reset_error);
+  const reset_success = useSelector(state => state.forgotpwd.reset_success);
+  const reset_loading = useSelector(state => state.forgotpwd.reset_loading);
 
   const dispatch = useDispatch();
 
   const Loginfun = async val => {
     const data = {
-      email: val.email,
+      token: token,
       password: val.password,
     };
-    setEmail(val.email);
-    dispatch(loginuser(data));
-  };
-
-  useEffect(() => {
-    console.log(resend_token);
-    if (resend_token) {
-      console.log('log');
-      navigation.navigate('Verifyotp');
-    }
-  }, [resend_token]);
-
-  const resetverifiction = () => {
-    const data = {
-      email: email,
-    };
-    dispatch(resendverifyotp(data));
+    dispatch(reset_password(data));
   };
 
   return (
     <View style={{flex: 1}}>
       <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
-          <Text style={styles.headingtext}>Welcome back</Text>
-          <Text style={styles.subtext}>Sign in to your account</Text>
+          <Text style={styles.headingtext}>Change Password</Text>
+          <Text style={styles.subtext}>
+            You can able to change your password here
+          </Text>
           <Formik
-            initialValues={{email: '', password: ''}}
+            initialValues={{password: '', confirmpassword: ''}}
             onSubmit={values => {
               Loginfun(values);
             }}
             validationSchema={yup.object().shape({
-              email: yup.string().email().required('Email id is required'),
               password: yup.string().required('Password is required'),
+              confirmpassword: yup
+                .string()
+                .oneOf([yup.ref('password'), null], 'Passwords must match')
+                .required('Password is required'),
             })}>
             {({
               values,
@@ -79,37 +67,8 @@ function Login({navigation}) {
             }) => (
               <View>
                 <View>
-                  <Text style={styles.labletext}>Email</Text>
-                  <TextInput
-                    onChangeText={handleChange('email')}
-                    onBlur={() => setFieldTouched('email')}
-                    value={values.email}
-                    style={styles.input}
-                    placeholder="you@example.com"
-                    placeholderTextColor="#949392"
-                  />
-                  {touched.email && errors.email && (
-                    <Text style={{fontSize: 12, color: '#FF0D10'}}>
-                      {errors.email}
-                    </Text>
-                  )}
-                </View>
-                <View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems:"center"
-                    }}>
+                  <View>
                     <Text style={styles.labletext}>Password</Text>
-                    <Text style={{right:20}}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          navigation.navigate('forgotpwd');
-                        }}>
-                        <Text style={{color:"#000000"}}>Forgot Password ?</Text>
-                      </TouchableOpacity>
-                    </Text>
                   </View>
                   <View>
                     <TextInput
@@ -139,19 +98,40 @@ function Login({navigation}) {
                     )}
                   </View>
                 </View>
-                {!resend_error ? (
-                  error && (
+
+                <View>
+                  <View>
+                    <Text style={styles.labletext}>Confirm Password</Text>
+                  </View>
+                  <View>
+                    <TextInput
+                      onChangeText={handleChange('confirmpassword')}
+                      onBlur={() => setFieldTouched('confirmpassword')}
+                      value={values.confirmpassword}
+                      placeholderTextColor="#949392"
+                      style={styles.input}
+                      placeholder="••••••••"
+                      secureTextEntry={!isshowpass_2}
+                    />
                     <Text
-                      style={{
-                        fontSize: 15,
-                        color: '#FF0D10',
-                        textAlign: 'center',
-                        top: 10,
+                      style={{position: 'absolute', left: 260, top: 9}}
+                      onPress={e => {
+                        setisshowpass_2(!isshowpass_2);
                       }}>
-                      {error}
+                      <Icon
+                        name={isshowpass_2 ? 'eye-slash' : 'eye'}
+                        size={20}
+                        color="black"
+                      />
                     </Text>
-                  )
-                ) : (
+                    {touched.confirmpassword && errors.confirmpassword && (
+                      <Text style={{fontSize: 12, color: '#FF0D10'}}>
+                        {errors.confirmpassword}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                {reset_error && (
                   <Text
                     style={{
                       fontSize: 15,
@@ -159,57 +139,48 @@ function Login({navigation}) {
                       textAlign: 'center',
                       top: 10,
                     }}>
-                    {resend_error}
+                    {reset_error}
+                  </Text>
+                )}
+                {reset_success && (
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      color: '#FF0D10',
+                      textAlign: 'center',
+                      top: 10,
+                    }}>
+                    Goto login page click{' '}
+                    <Text
+                      style={{
+                        color: '#000000',
+                        textDecorationLine: 'underline',
+                      }}
+                      onPress={() => navigation.navigate('Login')}>
+                      here!
+                    </Text>
                   </Text>
                 )}
                 <View style={{paddingTop: 30}}>
                   <TouchableOpacity
                     style={styles.button}
                     onPress={handleSubmit}
-                    disabled={!isValid && !loading}>
+                    disabled={!isValid && !reset_loading}>
                     <Text
                       style={{
                         color: 'white',
                         fontWeight: 'bold',
                         fontSize: 17,
                       }}>
-                      {loading && (
+                      {reset_loading && (
                         <ActivityIndicator
                           animating={true}
                           color={MD2Colors.white}
                         />
                       )}
-                      Signin
+                      Change Password
                     </Text>
                   </TouchableOpacity>
-                </View>
-                {error === 'Please verify your email to login' && (
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      textAlign: 'center',
-                      top: 10,
-                    }}>
-                    Haven't received a verification OTP ?{'\n'}
-                    <TouchableOpacity onPress={resetverifiction}>
-                      <Text>Resend it here.</Text>
-                    </TouchableOpacity>
-                  </Text>
-                )}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    paddingTop: 25,
-                  }}>
-                  <Text style={{color: '#7E7E7E'}}>
-                    Don't have an account ?{' '}
-                  </Text>
-                  <Text
-                    style={{color: '#949392', textDecorationLine: 'underline'}}
-                    onPress={() => navigation.navigate('Signup')}>
-                    Sign Up Now
-                  </Text>
                 </View>
               </View>
             )}
@@ -263,4 +234,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Login;
+export default ChangePassword;

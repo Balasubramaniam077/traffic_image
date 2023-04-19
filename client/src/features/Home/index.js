@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import {Dimensions} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
@@ -14,15 +14,17 @@ import {
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {UserContext} from '../../../App';
 import {styles} from './styles';
 import config from '../../utils/api';
+import {useDispatch} from 'react-redux';
+import {logout} from '../Signup/signupSlice';
 
 export default function Home({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [file, setFile] = useState({});
   const {width, height} = Dimensions.get('screen');
-  const [loggedIn, setloggedIn] = useContext(UserContext);
+
+  const dispatch = useDispatch();
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
@@ -142,7 +144,7 @@ export default function Home({navigation}) {
 
   const Logout = async () => {
     await AsyncStorage.removeItem('token');
-    setloggedIn('fasle');
+    dispatch(logout());
   };
 
   return (

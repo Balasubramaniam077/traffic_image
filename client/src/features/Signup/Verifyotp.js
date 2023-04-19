@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   TextInput,
   View,
@@ -7,51 +7,64 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import {useDispatch, useSelector} from 'react-redux';
 import {ActivityIndicator, MD2Colors} from 'react-native-paper';
-import {signupUser} from './signupSlice';
+import {VerifyUser} from './signupSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //Validation
 import {Formik} from 'formik';
 import * as yup from 'yup';
 
-function Signup({navigation}) {
-  const [isshowpass, setisshowpass] = useState(false);
+function Verifyotp({navigation}) {
+  const error = useSelector(state => state.signup.verify_error);
+  const loading = useSelector(state => state.signup.verify_loading);
+  const [token, setToken] = useState(useSelector(state => state.signup.token)||useSelector(state => state.login.resend_token));
 
-  const error = useSelector(state => state.signup.error);
-  const loading = useSelector(state => state.signup.loading);
-  const token = useSelector(state => state.signup.token);
+  useEffect(() => {
+    getToken();
+  }, []);
+
+  const getToken = async () => {
+    try {
+      const value = await AsyncStorage.getItem('verify_token');
+      if (value !== null) {
+        setToken(value);
+      }
+    } catch (e) {
+      // error reading value
+      console.log(e);
+    }
+  };
 
   const dispatch = useDispatch();
 
-  const Signupfun = async val => {
+  const verify_otp = async val => {
     const data = {
-      email: val.email,
-      password: val.password,
+      token: token,
+      otp: val.otp,
     };
+    console.log(data);
 
-    dispatch(signupUser(data));
+    dispatch(VerifyUser(data));
   };
-
-  if(token){
-    navigation.navigate('Verifyotp');
-  }
 
   return (
     <View style={{flex: 1}}>
       <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
         <View style={styles.container}>
-          <Text style={styles.headingtext}>Get started</Text>
-          <Text style={styles.subtext}>Create a new account</Text>
+          <Text style={styles.headingtext}>Verify OTP</Text>
+          <Text style={styles.subtext}>Verify your account</Text>
           <Formik
-            initialValues={{email: '', password: ''}}
+            initialValues={{otp: ''}}
             onSubmit={values => {
-              Signupfun(values);
+              verify_otp(values);
             }}
             validationSchema={yup.object().shape({
-              email: yup.string().email().required('Email id is required'),
-              password: yup.string().required('Password is required'),
+              otp: yup
+                .string()
+                .length(4, 'OTP must be exactly 4 digits')
+                .required('OTP is required'),
             })}>
             {({
               values,
@@ -64,50 +77,20 @@ function Signup({navigation}) {
             }) => (
               <View>
                 <View>
-                  <Text style={styles.labletext}>Email</Text>
+                  <Text style={styles.labletext}>OTP</Text>
                   <TextInput
-                    onChangeText={handleChange('email')}
-                    onBlur={() => setFieldTouched('email')}
-                    value={values.email}
+                    onChangeText={handleChange('otp')}
+                    onBlur={() => setFieldTouched('otp')}
+                    value={values.otp}
                     style={styles.input}
-                    placeholder="you@example.com"
+                    placeholder="0 0 0 0"
                     placeholderTextColor="#949392"
                   />
-                  {touched.email && errors.email && (
+                  {touched.otp && errors.otp && (
                     <Text style={{fontSize: 12, color: '#FF0D10'}}>
-                      {errors.email}
+                      {errors.otp}
                     </Text>
                   )}
-                </View>
-                <View>
-                  <Text style={styles.labletext}>Password</Text>
-                  <View>
-                    <TextInput
-                      onChangeText={handleChange('password')}
-                      onBlur={() => setFieldTouched('password')}
-                      value={values.password}
-                      placeholderTextColor="#949392"
-                      style={styles.input}
-                      placeholder="••••••••"
-                      secureTextEntry={!isshowpass}
-                    />
-                    <Text
-                      style={{position: 'absolute', left: 260, top: 9}}
-                      onPress={e => {
-                        setisshowpass(!isshowpass);
-                      }}>
-                      <Icon
-                        name={isshowpass ? 'eye-slash' : 'eye'}
-                        size={20}
-                        color="black"
-                      />
-                    </Text>
-                    {touched.password && errors.password && (
-                      <Text style={{fontSize: 12, color: '#FF0D10'}}>
-                        {errors.password}
-                      </Text>
-                    )}
-                  </View>
                 </View>
                 {error && (
                   <Text
@@ -137,22 +120,9 @@ function Signup({navigation}) {
                           color={MD2Colors.white}
                         />
                       )}
-                      Signup
+                      Verify OTP
                     </Text>
                   </TouchableOpacity>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    paddingTop: 25,
-                  }}>
-                  <Text style={{color: '#7E7E7E'}}>Have an account ? </Text>
-                  <Text
-                    style={{color: '#949392', textDecorationLine: 'underline'}}
-                    onPress={() => navigation.navigate('Login')}>
-                    Sign In Now
-                  </Text>
                 </View>
               </View>
             )}
@@ -206,4 +176,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Signup;
+export default Verifyotp;

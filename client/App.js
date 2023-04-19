@@ -1,27 +1,15 @@
 import {NavigationContainer} from '@react-navigation/native';
 import AppNavigation from './src/routes/AppNavigation';
-import React, {createContext, useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export const UserContext = createContext(false);
+import React from 'react';
+import {Provider} from 'react-redux';
+import store from './src/store';
 
 export default function App() {
-  const [loggedIn, setloggedIn] = useState();
-
-  useEffect(() => {
-    getToken();
-  }, []);
-
-  const getToken = async () => {
-    const token = await AsyncStorage.getItem('token');
-    setloggedIn(token !== null);
-  };
-
   return (
-    <UserContext.Provider value={[loggedIn, setloggedIn]}>
-      <NavigationContainer>
+    <NavigationContainer>
+      <Provider store={store}>
         <AppNavigation />
-      </NavigationContainer>
-    </UserContext.Provider>
+      </Provider>
+    </NavigationContainer>
   );
 }
